@@ -10,18 +10,44 @@
       </el-input>
       <el-button class="find-el-btn">重置</el-button>
     </div>
+    <div class="user-find-add" @click="doAdd">
+      <el-button>添加</el-button>
+    </div>
   </div>
   <div class="user-table">
-    <vxe-grid
+    <vxe-table
       :border="false"
       resizable
       show-overflow
       :height="tableHeight"
-      :columns="userCloumns"
       :data="list"
       header-row-class-name="table-header"
       header-cell-class-name="table-header-cell"
-    ></vxe-grid>
+    >
+      <vxe-table-column field="account" title="账号" min-width="100px"></vxe-table-column>
+      <vxe-table-column field="name" title="姓名" min-width="100px"></vxe-table-column>
+      <vxe-table-column field="email" title="邮箱" min-width="100px"></vxe-table-column>
+      <vxe-table-column field="add_time" title="添加时间" min-width="100px"></vxe-table-column>
+      <vxe-table-column field="login_time" title="登录时间" min-width="100px"></vxe-table-column>
+      <vxe-table-column field="isEnable" title="是否启用" min-width="100px">
+        <template v-slot="{row}">
+          <el-switch
+            v-model="row.isEnable"
+            active-color="#409eff"
+            inactive-color="#ff4949">
+          </el-switch>
+        </template>
+      </vxe-table-column>
+      <vxe-table-column field="option" title="操作" min-width="100px">
+        <template v-slot="{row}">
+          <div>
+            <span @click="doAllocation({row})">分配角色</span>
+            <span @click="doMobile({row})">编辑</span>
+            <span @click="doDelete({row})">删除</span>
+          </div>
+        </template>
+      </vxe-table-column>
+    </vxe-table>
   </div>
   <div class="user-page">
     <el-pagination
@@ -34,6 +60,7 @@
       :total="total">
     </el-pagination>
   </div>
+  <add-user ref="users" :info="userInfo"></add-user>
 </div>
 </template>
 <script lang="ts">
@@ -41,13 +68,19 @@ import {Vue, Component} from 'vue-property-decorator'
 import icon from '@/components/icon/icon.vue'
 import top from '@/components/top/index.vue'
 import { getHeight } from '@/utils/utils'
+import AddUser from './component/user/addUser.vue'
 import {
   getList
 } from '@/api/user'
+interface Uinfo {
+  type: string,
+  [propName:string]: any
+}
 @Component({
   components: {
     icon,
-    top
+    top,
+    AddUser
   }
 })
 export default class User extends Vue {
@@ -69,44 +102,10 @@ export default class User extends Vue {
       email: '789'
     }
   ] // 列表数据
-  private userCloumns: any[] = [
-    {
-      field: 'account',
-      title: '账号',
-      minWidth: '100px'
-    },
-    {
-      field: 'name',
-      title: '姓名',
-      minWidth: '100px'
-    },
-    {
-      field: 'email',
-      title: '邮箱',
-      minWidth: '150px'
-    },
-    {
-      field: 'add_time',
-      title: '添加时间',
-      minWidth: '150px'
-    },
-    {
-      field: 'login_time',
-      title: '登录时间',
-      minWidth: '150px'
-    },
-    {
-      filed: 'isEnable',
-      title: '是否启用',
-      minWidth: '120px'
-    },
-    {
-      title: '操作',
-      width: '192px',
-      fixed: 'right',
-      resizable: false
-    }
-  ]
+  private userInfo: Uinfo = {
+    type: 'add',
+    row: null
+  }
   
   created () {
     this.doGetList()
@@ -130,6 +129,19 @@ export default class User extends Vue {
   }
   // 改变页数
   handleCurrentChange (val:number):void {}
+  // 点击添加
+  public doAdd () {
+    this.userInfo.type = 'add'
+    this.userInfo.row = null
+    let el:any = this.$refs.users
+    el.open()
+  }
+  // 点击分配权限
+  doAllocation ({row}:any) {}
+  // 点击编辑
+  doMobile ({row}:any) {}
+  // 点击删除
+  doDelete ({row}:any) {}
 }
 </script>
 <style lang="scss" scoped>
@@ -137,7 +149,7 @@ export default class User extends Vue {
   width: 100%;
   height: 50px;
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #dcdfe6;
   .user-find-input {
@@ -194,6 +206,27 @@ export default class User extends Vue {
     }
     // .find-el-icon {
     // }
+  }
+  /deep/.el-button {
+    padding: 0;
+    border: none;
+  }
+  /deep/.el-button:hover {
+    background: #ffffff;
+  }
+  /deep/.el-button:active {
+    background: #ffffff;
+  }
+  .user-find-add {
+    width: 56px;
+    height: 30px;
+    line-height: 32px;
+    text-align: center;
+    margin-right: 12px;
+    border: 1px solid #dcdfe6!important;
+    border-radius: 2px;
+    font-size: 12px;
+    background: #ffffff;
   }
 }
 .user-table {

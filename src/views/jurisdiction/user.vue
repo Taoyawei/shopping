@@ -34,16 +34,16 @@
           <el-switch
             v-model="row.isEnable"
             active-color="#409eff"
-            inactive-color="#ff4949">
+            inactive-color="#dcdfe6">
           </el-switch>
         </template>
       </vxe-table-column>
       <vxe-table-column field="option" title="操作" min-width="100px">
         <template v-slot="{row}">
           <div>
-            <span @click="doAllocation({row})">分配角色</span>
-            <span @click="doMobile({row})">编辑</span>
-            <span @click="doDelete({row})">删除</span>
+            <span class="span-btn" @click="doAllocation({row})">分配角色</span>
+            <span class="span-btn-active" @click="doMobile({row})">编辑</span>
+            <span class="span-btn-active" @click="doDelete({row})">删除</span>
           </div>
         </template>
       </vxe-table-column>
@@ -60,7 +60,10 @@
       :total="total">
     </el-pagination>
   </div>
+  <!-- 添加用户 -->
   <add-user ref="users" :info="userInfo"></add-user>
+  <!-- 分配角色 -->
+  <dis-role ref="disRole"></dis-role>
 </div>
 </template>
 <script lang="ts">
@@ -69,6 +72,7 @@ import icon from '@/components/icon/icon.vue'
 import top from '@/components/top/index.vue'
 import { getHeight } from '@/utils/utils'
 import AddUser from './component/user/addUser.vue'
+import DisRole from './component/user/disRole.vue'
 import {
   getList
 } from '@/api/user'
@@ -80,7 +84,8 @@ interface Uinfo {
   components: {
     icon,
     top,
-    AddUser
+    AddUser,
+    DisRole
   }
 })
 export default class User extends Vue {
@@ -137,9 +142,19 @@ export default class User extends Vue {
     el.open()
   }
   // 点击分配权限
-  doAllocation ({row}:any) {}
+  doAllocation ({row}:any) {
+    // this.userInfo.type = 'modify'
+    // this.userInfo.row = row
+    let el:any = this.$refs.disRole
+    el.open()
+  }
   // 点击编辑
-  doMobile ({row}:any) {}
+  doMobile ({row}:any) {
+    this.userInfo.type = 'modify'
+    this.userInfo.row = row
+    let el:any = this.$refs.users
+    el.open()
+  }
   // 点击删除
   doDelete ({row}:any) {}
 }
@@ -237,5 +252,16 @@ export default class User extends Vue {
 }
 .user-page {
   text-align: right;
+}
+.span-btn {
+  font-size: 12px;
+  color: #409eff;
+  cursor: pointer;
+}
+.span-btn-active {
+  font-size: 12px;
+  color: #409eff;
+  cursor: pointer;
+  margin-left: 8px;
 }
 </style>

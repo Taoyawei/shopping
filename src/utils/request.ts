@@ -14,7 +14,7 @@ const instance = Axios.create({
 instance.interceptors.request.use(function (config):any {
   config.headers = {
     // token: store.getters.userInfo.token
-    token: '7fe36acc02204c5a0f61e5b77b8e0793=1607939043459'
+    token: '7fe36acc02204c5a0f61e5b77b8e0793=1608011303010'
   } // 请求之前做处理
   return Promise.resolve(config)
 }, function (error): any {

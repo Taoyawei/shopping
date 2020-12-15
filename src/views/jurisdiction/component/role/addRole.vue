@@ -13,20 +13,17 @@
     </div>
     <div class="user-body">
       <el-form ref="form" :model="userInfo" label-width="150px">
-        <el-form-item label="账号：" class="body-item">
-          <el-input v-model="userInfo.account" class="body-input"></el-input>
+        <el-form-item label="角色名称：" class="body-item">
+          <el-input v-model="userInfo.role_name" class="body-input"></el-input>
         </el-form-item>
-        <el-form-item label="姓名：" class="body-item">
-          <el-input v-model="userInfo.name" class="body-input"></el-input>
+        <el-form-item label="描述" class="body-item-des">
+          <el-input type="textarea" v-model="userInfo.role_des" class="body-input"></el-input>
         </el-form-item>
-        <el-form-item label="手机号：" class="body-item">
-          <el-input v-model="userInfo.mobile" class="body-input"></el-input>
-        </el-form-item>
-        <el-form-item label="密码：" class="body-item">
-          <el-input v-model="userInfo.password" class="body-input"></el-input>
-        </el-form-item>
-        <el-form-item label="邮箱：" class="body-item">
-          <el-input v-model="userInfo.email" class="body-input"></el-input>
+        <el-form-item label="是否启用" class="body-item-radio">
+          <el-radio-group v-model="userInfo.isEnable" class="body-input">
+            <el-radio :label="true">是</el-radio>
+            <el-radio :label="false">否</el-radio>
+          </el-radio-group>
         </el-form-item>
       </el-form>
     </div>
@@ -40,11 +37,9 @@
 import {Vue, Component, Prop} from 'vue-property-decorator'
 import Icon from '@/components/icon/icon.vue'
 interface User { // 表单数据接口
-  account: string,
-  name: string,
-  mobile: string,
-  password: string,
-  email?: string
+  role_name: string,
+  role_des: string,
+  isEnable: boolean
 }
 interface Pinfo { // 传入信息的数据接口
   type: string,
@@ -58,21 +53,19 @@ interface Pinfo { // 传入信息的数据接口
 export default class AddUser extends Vue {
   @Prop({type: Object}) readonly info!:Pinfo
   private visible:boolean = false // 弹窗显隐
-  private title:string = '添加用户' // 标题
+  private title:string = '新增角色' // 标题
   private propInfo:any = null // 用户传入的信息
   private userInfo:User = {
-    account: '', // 账号
-    name: '', // 姓名
-    mobile: '', // 手机号
-    password: '', // 密码
-    email: '' // 邮箱
+    role_name: '', // 角色名称
+    role_des: '', // 描述
+    isEnable: false // 是否启用
   }
 
   /*******methods */
   // 打开弹窗
   public open () {
     this.propInfo = JSON.parse(JSON.stringify(this.info))
-    this.title = this.propInfo.type === 'add' ? '新增用户' : '查看用户'
+    this.title = this.propInfo.type === 'add' ? '新增角色' : '查看角色'
     if (this.propInfo.type !== 'add') 
     this.doInit(this.propInfo.type)
     this.visible = true
@@ -148,6 +141,35 @@ export default class AddUser extends Vue {
       width: 240px;
       height: 28px;
       border: 1px solid #dde0e7;
+      // margin-top: 6px;
+      border-radius: 3px;
+    }
+  }
+  .body-item-des {
+    width: 100%;
+    // height: 28px;
+    margin-top: 20px;
+    .body-input {
+      width: 240px;
+      // height: 28px;
+      // border: 1px solid #dde0e7;
+      // margin-top: 6px;
+      border-radius: 3px;
+    }
+  }
+  .body-item-radio {
+    width: 100%;
+    // height: 28px;
+    // margin-top: 20px;
+    display: flex;
+    align-items: center;
+    /deep/.el-form-item__content {
+      margin-left: 0px!important;
+    }
+    .body-input {
+      width: 240px;
+      // height: 28px;
+      // border: 1px solid #dde0e7;
       // margin-top: 6px;
       border-radius: 3px;
     }

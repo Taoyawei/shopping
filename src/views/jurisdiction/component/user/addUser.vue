@@ -28,23 +28,35 @@
         <el-form-item label="邮箱：" class="body-item">
           <el-input v-model="userInfo.email" class="body-input"></el-input>
         </el-form-item>
+        <el-form-item label="是否启用" class="body-item-radio">
+          <el-radio-group v-model="userInfo.isEnable" class="body-input">
+            <el-radio :label="true">是</el-radio>
+            <el-radio :label="false">否</el-radio>
+          </el-radio-group>
+        </el-form-item>
       </el-form>
     </div>
     <div class="add-suer-footer">
       <el-button class="footer-cancle" @click="doClose">取消</el-button>
-      <el-button class="footer-comfirm">确认</el-button>
+      <el-button class="footer-comfirm" @click="doPerson">确认</el-button>
     </div>
   </el-dialog>
 </template>
 <script lang="ts">
 import {Vue, Component, Prop} from 'vue-property-decorator'
 import Icon from '@/components/icon/icon.vue'
+import {
+  addUser,
+  modifyUser
+} from '@/api/user'
 interface User { // 表单数据接口
   account: string,
   name: string,
   mobile: string,
   password: string,
+  isEnable: boolean,
   email?: string
+  id?: number
 }
 interface Pinfo { // 传入信息的数据接口
   type: string,
@@ -65,6 +77,7 @@ export default class AddUser extends Vue {
     name: '', // 姓名
     mobile: '', // 手机号
     password: '', // 密码
+    isEnable: false, // 是否启用
     email: '' // 邮箱
   }
 
@@ -89,13 +102,16 @@ export default class AddUser extends Vue {
     this.$delete(this.userInfo, 'mobile')
     this.$delete(this.userInfo, 'password')
     this.$delete(this.userInfo, 'email')
+    this.$delete(this.userInfo, 'isEnable')
     switch (type) {
       case 'modify':
         this.$set(this.userInfo, 'account', this.propInfo.row.account)
         this.$set(this.userInfo, 'name', this.propInfo.row.name)
         this.$set(this.userInfo, 'mobile', this.propInfo.row.mobile)
-        this.$set(this.userInfo, 'password', this.propInfo.row.password)
+        this.$set(this.userInfo, 'password', this.propInfo.row.password_account)
         this.$set(this.userInfo, 'email', this.propInfo.row.email ? this.propInfo.row.email : '')
+        this.$set(this.userInfo, 'isEnable', this.propInfo.row.isEnable)
+        this.userInfo.id = this.propInfo.row.id
         break
       default:
         this.$set(this.userInfo, 'account', '')
@@ -103,8 +119,71 @@ export default class AddUser extends Vue {
         this.$set(this.userInfo, 'mobile', '')
         this.$set(this.userInfo, 'password', '')
         this.$set(this.userInfo, 'email', '')
+        this.$set(this.userInfo, 'isEnable', false)
+        this.$set(this.userInfo, 'id', null)
         break
     }
+  }
+  // 点击确认
+  doPerson () {
+    if (!this.userInfo.account || !this.userInfo.name || !this.userInfo.mobile || !this.userInfo.password || !this.userInfo.email) {
+      return this.$message.error('参数不完整')
+    }
+    switch (this.propInfo.type) {
+      case 'add':
+        this.addPerson()
+        break
+      case 'modify':
+        this.doModify()
+        break
+    }
+  }
+  // 新增
+  addPerson () {
+    const req:any = {
+      account: this.userInfo.account,
+      name: this.userInfo.name,
+      mobile: this.userInfo.mobile,
+      password: this.userInfo.password,
+      email: this.userInfo.email,
+      isEnable: this.userInfo.isEnable
+    }
+    addUser(req).then(data => {
+      const res: any = data
+      if (res.code === 0) {
+        this.$message.success('新增成功')
+        this.$emit('success', 1)
+        this.doClose()
+      }
+    }).catch(err => {
+      this.$message.error(err)
+    })
+  }
+  // 编辑
+  doModify (item?:any) {
+    if (item) {
+      this.userInfo = JSON.parse(JSON.stringify(item))
+      this.userInfo.password = item.password_account
+    }
+    const req:any = {
+      id: this.userInfo.id,
+      account: this.userInfo.account,
+      name: this.userInfo.name,
+      mobile: this.userInfo.mobile,
+      password: this.userInfo.password,
+      email: this.userInfo.email,
+      isEnable: this.userInfo.isEnable
+    }
+    modifyUser(req).then(data => {
+      const res:any = data
+      if (res.code === 0) {
+        this.$message.success('编辑成功')
+        this.$emit('success', 1)
+        this.doClose()
+      }
+    }).catch(err => {
+      this.$message.error(err)
+    })
   }
 }
 </script>
@@ -167,7 +246,7 @@ export default class AddUser extends Vue {
     margin-right: 16px;
   }
   .footer-comfirm:hover {
-    background: #409eff;
+    background: #409eff!important;
     color: #FFFFFF;
   }
   .footer-cancle {
@@ -199,5 +278,22 @@ export default class AddUser extends Vue {
 }
 /deep/.el-button:active {
   background: #ffffff;
+}
+.body-item-radio {
+  width: 100%;
+  // height: 28px;
+  // margin-top: 20px;
+  display: flex;
+  align-items: center;
+  /deep/.el-form-item__content {
+    margin-left: 0px!important;
+  }
+  .body-input {
+    width: 240px;
+    // height: 28px;
+    // border: 1px solid #dde0e7;
+    // margin-top: 6px;
+    border-radius: 3px;
+  }
 }
 </style>

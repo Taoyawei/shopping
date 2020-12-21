@@ -11,11 +11,14 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
   store.commit('SET_MENU', routes[1].children)
-  if (to.path === '/' && store.getters.userInfo) {
-    // next('/layout')
-    next()
-  } else {
-    next()
+  console.log(store.getters.userInfo)
+  if (to.path !== '/login' && !store.getters.userInfo) {
+    console.log(0)
+    next('/login')
+  } else if (to.path === '/' && store.getters.userInfo) {
+    console.log(1)
+    next('/home/index')
   }
+  next()
 })
 export default router

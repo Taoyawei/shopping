@@ -12,15 +12,15 @@
       </div>
     </div>
     <div class="user-body">
-      <el-form ref="form" :model="userInfo" label-width="150px">
+      <el-form ref="form" :model="roleInfo" label-width="150px">
         <el-form-item label="角色名称：" class="body-item">
-          <el-input v-model="userInfo.role_name" class="body-input"></el-input>
+          <el-input v-model="roleInfo.role_name" class="body-input"></el-input>
         </el-form-item>
         <el-form-item label="描述" class="body-item-des">
-          <el-input type="textarea" v-model="userInfo.role_des" class="body-input"></el-input>
+          <el-input type="textarea" v-model="roleInfo.role_des" class="body-input"></el-input>
         </el-form-item>
         <el-form-item label="是否启用" class="body-item-radio">
-          <el-radio-group v-model="userInfo.isEnable" class="body-input">
+          <el-radio-group v-model="roleInfo.isEnable" class="body-input">
             <el-radio :label="true">是</el-radio>
             <el-radio :label="false">否</el-radio>
           </el-radio-group>
@@ -29,14 +29,18 @@
     </div>
     <div class="add-suer-footer">
       <el-button class="footer-cancle" @click="doClose">取消</el-button>
-      <el-button class="footer-comfirm">确认</el-button>
+      <el-button class="footer-comfirm" @click="comfirm">确认</el-button>
     </div>
   </el-dialog>
 </template>
 <script lang="ts">
 import {Vue, Component, Prop} from 'vue-property-decorator'
 import Icon from '@/components/icon/icon.vue'
-interface User { // 表单数据接口
+import {
+  addRole,
+  modifyRole
+} from '@/api/role'
+interface Role { // 表单数据接口
   role_name: string,
   role_des: string,
   isEnable: boolean
@@ -50,12 +54,12 @@ interface Pinfo { // 传入信息的数据接口
     Icon
   }
 })
-export default class AddUser extends Vue {
+export default class AddRole extends Vue {
   @Prop({type: Object}) readonly info!:Pinfo
   private visible:boolean = false // 弹窗显隐
   private title:string = '新增角色' // 标题
   private propInfo:any = null // 用户传入的信息
-  private userInfo:User = {
+  private roleInfo:Role = {
     role_name: '', // 角色名称
     role_des: '', // 描述
     isEnable: false // 是否启用
@@ -66,8 +70,7 @@ export default class AddUser extends Vue {
   public open () {
     this.propInfo = JSON.parse(JSON.stringify(this.info))
     this.title = this.propInfo.type === 'add' ? '新增角色' : '查看角色'
-    if (this.propInfo.type !== 'add') 
-    this.doInit(this.propInfo.type)
+    if (this.propInfo.type !== 'add') this.doInit(this.propInfo.type)
     this.visible = true
   }
   // 关闭弹窗
@@ -75,27 +78,79 @@ export default class AddUser extends Vue {
     this.visible = false
     this.doInit()
   }
+  // 点击确定
+  comfirm () {
+    console.log(this.roleInfo)
+    if (!this.roleInfo.role_name) {
+      this.$message.error('参数不完整')
+      return false
+    }
+    switch (this.propInfo.type) {
+      case 'add':
+        this.doAddRole()
+        break
+      case 'modify':
+        this.doModifyRole()
+        break
+    }
+  }
+  // 新增
+  doAddRole () {
+    const req = {
+      role_name: this.roleInfo.role_name, // 角色名称
+      role_des: this.roleInfo.role_des, // 角色描述
+      isEnable: this.roleInfo.isEnable // 是否启用
+    }
+    addRole(req).then(data => {
+      const res:any = data
+      if (res.code === 0) {
+        this.$message.success('添加成功')
+        this.$emit('success', 1)
+        this.doClose()
+      }
+    }).catch(err => {
+      this.$message.error(err)
+    })
+  }
+  // 编辑
+  doModifyRole (item?:any) {
+    let id = null
+    if (item) {
+      this.roleInfo = JSON.parse(JSON.stringify(item))
+      id = item.id
+    }
+    const req = {
+      id: this.propInfo ? this.propInfo.row.id : id,
+      role_name: this.roleInfo.role_name,
+      role_des: this.roleInfo.role_des,
+      isEnable: this.roleInfo.isEnable
+    }
+    modifyRole(req).then(data => {
+      const res:any = data
+      if (res.code === 0) {
+        this.$message.success('编辑成功')
+        this.$emit('success', 1)
+        this.doClose()
+      }
+    }).catch(err => {
+      this.$message.error(err)
+    })
+  }
   // 数据初始化
   doInit (type?: string) {
-    this.$delete(this.userInfo, 'account')
-    this.$delete(this.userInfo, 'name')
-    this.$delete(this.userInfo, 'mobile')
-    this.$delete(this.userInfo, 'password')
-    this.$delete(this.userInfo, 'email')
+    this.$delete(this.roleInfo, 'role_name')
+    this.$delete(this.roleInfo, 'role_des')
+    this.$delete(this.roleInfo, 'isEnable')
     switch (type) {
       case 'modify':
-        this.$set(this.userInfo, 'account', this.propInfo.row.account)
-        this.$set(this.userInfo, 'name', this.propInfo.row.name)
-        this.$set(this.userInfo, 'mobile', this.propInfo.row.mobile)
-        this.$set(this.userInfo, 'password', this.propInfo.row.password)
-        this.$set(this.userInfo, 'email', this.propInfo.row.email ? this.propInfo.row.email : '')
+        this.$set(this.roleInfo, 'role_name', this.propInfo.row.role_name)
+        this.$set(this.roleInfo, 'role_des', this.propInfo.row.role_des)
+        this.$set(this.roleInfo, 'isEnable', this.propInfo.row.isEnable)
         break
       default:
-        this.$set(this.userInfo, 'account', '')
-        this.$set(this.userInfo, 'name', '')
-        this.$set(this.userInfo, 'mobile', '')
-        this.$set(this.userInfo, 'password', '')
-        this.$set(this.userInfo, 'email', '')
+        this.$set(this.roleInfo, 'role_name', '')
+        this.$set(this.roleInfo, 'role_des', '')
+        this.$set(this.roleInfo, 'isEnable', false)
         break
     }
   }
@@ -189,7 +244,7 @@ export default class AddUser extends Vue {
     margin-right: 16px;
   }
   .footer-comfirm:hover {
-    background: #409eff;
+    background: #409eff!important;
     color: #FFFFFF;
   }
   .footer-cancle {

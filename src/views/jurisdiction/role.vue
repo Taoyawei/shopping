@@ -4,11 +4,11 @@
   <div class="user-find">
     <div class="user-find-input">
       <el-input class="find-el-input" v-model="name" placeholder="请输入姓名/账号/手机号">
-        <div slot="suffix" class="input-icon">
+        <div slot="suffix" class="input-icon" @click="findList">
           <icon type="iconsousuo" :size="16" color="#434146" class="find-el-icon" />
         </div>
       </el-input>
-      <el-button class="find-el-btn">重置</el-button>
+      <el-button class="find-el-btn" @click="doResert">重置</el-button>
     </div>
     <div class="user-find-add" @click="doAdd">
       <el-button>添加</el-button>
@@ -25,14 +25,16 @@
       header-cell-class-name="table-header-cell"
     >
       <vxe-table-column field="role_name" title="角色名称" min-width="100px"></vxe-table-column>
-      <vxe-table-column field="role-des" title="描述" min-width="100px"></vxe-table-column>
+      <vxe-table-column field="role_des" title="描述" min-width="100px"></vxe-table-column>
       <vxe-table-column field="add_time" title="添加时间" min-width="100px"></vxe-table-column>
       <vxe-table-column field="isEnable" title="是否启用" min-width="100px">
         <template v-slot="{row}">
           <el-switch
             v-model="row.isEnable"
             active-color="#409eff"
-            inactive-color="#dcdfe6">
+            inactive-color="#dcdfe6"
+            @change="changeRole({row})"
+          >
           </el-switch>
         </template>
       </vxe-table-column>
@@ -59,7 +61,7 @@
     </el-pagination>
   </div>
   <!-- 添加juese -->
-  <add-role ref="roles" :info="userInfo"></add-role>
+  <add-role ref="roles" :info="userInfo" @success="personList"></add-role>
   <!-- 分配菜单 -->
   <dis-menu ref="disMenu"></dis-menu>
 </div>
@@ -68,12 +70,13 @@
 import {Vue, Component} from 'vue-property-decorator'
 import icon from '@/components/icon/icon.vue'
 import top from '@/components/top/index.vue'
-import { getHeight } from '@/utils/utils'
+import { getHeight, transTime } from '@/utils/utils'
 import AddRole from './component/role/addRole.vue'
 import DisMenu from './component/role/disMenu.vue'
 import {
-  getList
-} from '@/api/user'
+  getList,
+  deleteRole
+} from '@/api/role'
 interface Uinfo {
   type: string,
   [propName:string]: any
@@ -107,35 +110,75 @@ export default class User extends Vue {
     type: 'add',
     row: null
   }
+  private ids:number[] = [] // 选中角色id
   
   created () {
     this.doGetList()
   }
   /***********mehods******* */ 
+  // 查询
+  findList () {
+    this.pageNo = 1
+    this.pageSize = 10
+    this.doGetList()
+  }
+  // 点击重置
+  doResert () {
+    this.name = ''
+    this.pageNo = 1
+    this.pageSize = 10
+    this.doGetList()
+  }
   // 获取用户列表
-  doGetList ():void {
+  doGetList () {
     const req = {
+      name: this.name,
       pageNo: this.pageNo,
       pageSize: this.pageSize
     }
-    getList(req).then(res => {
-      console.log(res)
+    getList(req).then(data => {
+      // console.log(res)
+      const res:any = data
+      if (res.code === 0) {
+        this.list = res.data.rows ? res.data.rows : []
+        this.total = res.data.count ? res.data.count : 0
+        if (this.list.length === 0 && this.total !==0 && this.pageNo !== 1) {
+          this.pageNo = 1
+          this.pageSize = 10
+          this.doGetList()
+        }
+        this.list.forEach(item => {
+          item.add_time = transTime(item.add_time)
+        })
+      }
     }).catch(err => {
       this.$message.error(err)
     })
   }
   // 改变每页条数
-  handleSizeChange (val:number):void {
-    console.log(val)
+  handleSizeChange (val:number) {
+    // console.log(val)
+    this.pageSize = val
+    this.doGetList()
   }
   // 改变页数
-  handleCurrentChange (val:number):void {}
+  handleCurrentChange (val:number) {
+    this.pageNo = val
+    this.doGetList()
+  }
   // 点击添加
   public doAdd () {
     this.userInfo.type = 'add'
     this.userInfo.row = null
     let el:any = this.$refs.roles
     el.open()
+  }
+  // 添加编辑成功
+  personList (msg:number) {
+    this.pageNo = 1
+    this.pageSize = 10
+    this.name = ''
+    this.doGetList()
   }
   // 点击分配权限
   doAllocation ({row}:any) {
@@ -151,8 +194,34 @@ export default class User extends Vue {
     let el:any = this.$refs.roles
     el.open()
   }
+  // 切换状态
+  changeRole ({row}:any) {
+    this.userInfo.row = row
+    let el:any = this.$refs.roles
+    console.log(row)
+    el.doModifyRole(row)
+  }
   // 点击删除
-  doDelete ({row}:any) {}
+  doDelete ({row}:any) {
+    this.ids = []
+    this.ids.push(row.id)
+    this.removeRole()
+  }
+  // 调用删除接口
+  removeRole () {
+    const req = {
+      role_id: this.ids
+    }
+    deleteRole(req).then(data => {
+      const res:any = data
+      if (res.code === 0) {
+        this.$message.success('删除成功')
+        this.doGetList()
+      }
+    }).catch(err => {
+      this.$message.error(err)
+    })
+  }
 }
 </script>
 <style lang="scss" scoped>

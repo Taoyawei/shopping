@@ -19,6 +19,9 @@ const user = {
     SET_USER (state: UState, value: any) {
       state.userInfo = value
     },
+    DEL_USER (state: UState, value: any) {
+      state.userInfo = null
+    },
     SET_HEIGHT (state: UState, value: number) {
       state.bodyHeight = value
     }

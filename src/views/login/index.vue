@@ -1,5 +1,5 @@
 <template>
-  <div class="login">
+  <div class="login" @keyup.enter.prevent="doLogin">
     <div class="login-box">
       <div class="box-center">
         <div class="center-top"></div>
@@ -49,8 +49,8 @@ export default class Login extends Vue {
   private password:string = '' // 密码
   
   mounted () {
-    const arr:[string, number] = ['hello', 123]
-    console.log(arr)
+    // const arr:[string, number] = ['hello', 123]
+    // console.log(arr)
   }
   // 登录
   doLogin (): void {
@@ -59,11 +59,9 @@ export default class Login extends Vue {
       password: this.password
     }
     goLogin(req).then((res: any) => {
-      // console.log(res)
-      if (res.status === 200) {
-        this.$store.commit('SET_USER', res.data.data)
-        this.$router.push({path: '/home/index'})
-      }
+      console.log(res)
+      this.$store.commit('SET_USER', res.data)
+      this.$router.push({path: '/home/index'})
     }).catch((err: any) => {
       console.log(err)
     })
@@ -148,11 +146,11 @@ export default class Login extends Vue {
           width: 318px;
           line-height: 40px;
           font-size: 16px;
-          background: #409eff;
+          background: #409eff!important;
           color: #ffffff;
         }
         /deep/.el-button:hover {
-          background: #409eff;
+          background: #409eff!important;
           color: #ffffff;
         }
       }

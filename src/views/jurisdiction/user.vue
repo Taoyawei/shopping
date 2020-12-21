@@ -4,11 +4,11 @@
   <div class="user-find">
     <div class="user-find-input">
       <el-input class="find-el-input" v-model="name" placeholder="请输入姓名/账号/手机号">
-        <div slot="suffix" class="input-icon">
+        <div slot="suffix" class="input-icon" @click="doFind">
           <icon type="iconsousuo" :size="16" color="#434146" class="find-el-icon" />
         </div>
       </el-input>
-      <el-button class="find-el-btn">重置</el-button>
+      <el-button class="find-el-btn" @click="doResert">重置</el-button>
     </div>
     <div class="user-find-add" @click="doAdd">
       <el-button>添加</el-button>
@@ -26,15 +26,26 @@
     >
       <vxe-table-column field="account" title="账号" min-width="100px"></vxe-table-column>
       <vxe-table-column field="name" title="姓名" min-width="100px"></vxe-table-column>
+      <vxe-table-column field="mobile" title="手机号" min-width="100px"></vxe-table-column>
       <vxe-table-column field="email" title="邮箱" min-width="100px"></vxe-table-column>
-      <vxe-table-column field="add_time" title="添加时间" min-width="100px"></vxe-table-column>
-      <vxe-table-column field="login_time" title="登录时间" min-width="100px"></vxe-table-column>
+      <vxe-table-column field="add_time" title="添加时间" min-width="100px">
+        <template v-slot="{row}">
+          <span>{{ row.add_time | filtersTime }}</span>
+        </template>
+      </vxe-table-column>
+      <vxe-table-column field="login_time" title="登录时间" min-width="100px">
+        <template v-slot="{row}">
+          <span>{{ row.login_time | filtersTime }}</span>
+        </template>
+      </vxe-table-column>
       <vxe-table-column field="isEnable" title="是否启用" min-width="100px">
         <template v-slot="{row}">
           <el-switch
             v-model="row.isEnable"
             active-color="#409eff"
-            inactive-color="#dcdfe6">
+            inactive-color="#dcdfe6"
+            @change="changeEnable({row})"  
+          >
           </el-switch>
         </template>
       </vxe-table-column>
@@ -61,7 +72,7 @@
     </el-pagination>
   </div>
   <!-- 添加用户 -->
-  <add-user ref="users" :info="userInfo"></add-user>
+  <add-user ref="users" :info="userInfo" @success="personList"></add-user>
   <!-- 分配角色 -->
   <dis-role ref="disRole"></dis-role>
 </div>
@@ -70,17 +81,23 @@
 import {Vue, Component} from 'vue-property-decorator'
 import icon from '@/components/icon/icon.vue'
 import top from '@/components/top/index.vue'
-import { getHeight } from '@/utils/utils'
+import { getHeight, transTime } from '@/utils/utils'
 import AddUser from './component/user/addUser.vue'
 import DisRole from './component/user/disRole.vue'
 import {
-  getList
+  getList,
+  deleteUser
 } from '@/api/user'
 interface Uinfo {
   type: string,
   [propName:string]: any
 }
 @Component({
+  filters: {
+    filtersTime (value:any) {
+      return transTime(value)
+    }
+  },
   components: {
     icon,
     top,
@@ -100,40 +117,69 @@ export default class User extends Vue {
   private pageNo:number = 1 // 页数
   private pageSize:number = 10 // 每页条数
   private total:number = 0 // 总条数
-  private list: any[] = [
-    {
-      account: '123',
-      name: '陶亚伟',
-      email: '789'
-    }
-  ] // 列表数据
+  private list: any[] = [] // 列表数据
   private userInfo: Uinfo = {
     type: 'add',
     row: null
   }
+  private user_id:number[] = [] // 选中数据id集合
   
   created () {
+    // console.log('0000')
     this.doGetList()
   }
-  /***********mehods******* */ 
+  /***********mehods******* */
+  // 搜索用户
+  doFind () {
+    this.pageNo = 1
+    this.pageSize = 10
+    this.doGetList()
+  }
+  // 点击重置
+  doResert () {
+    this.pageNo = 1
+    this.pageSize = 10
+    this.name = ''
+    this.doGetList()
+  }
   // 获取用户列表
-  doGetList ():void {
+  doGetList () {
     const req = {
+      name: this.name,
       pageNo: this.pageNo,
       pageSize: this.pageSize
     }
-    getList(req).then(res => {
-      console.log(res)
+    getList(req).then(data => {
+      // console.log(res.code)
+      const res:any = data
+      if (res.code === 0) {
+        this.list = res.data.rows
+        this.total = res.data.count
+        if (this.list.length === 0 && this.total !==0 && this.pageNo !== 1) {
+          this.pageNo = 1
+          this.pageSize = 10
+          this.doGetList()
+        }
+        this.list.forEach(item => {
+          item.add_time = transTime(item.add_time)
+          item.login_time = transTime(item.login_time)
+        })
+      }
     }).catch(err => {
       this.$message.error(err)
     })
   }
   // 改变每页条数
   handleSizeChange (val:number):void {
-    console.log(val)
+    // console.log(val)
+    this.pageSize = val
+    this.doGetList()
   }
   // 改变页数
-  handleCurrentChange (val:number):void {}
+  handleCurrentChange (val:number):void {
+    this.pageNo = val
+    this.doGetList()
+  }
   // 点击添加
   public doAdd () {
     this.userInfo.type = 'add'
@@ -148,6 +194,14 @@ export default class User extends Vue {
     let el:any = this.$refs.disRole
     el.open()
   }
+  // 切换状态
+  changeEnable ({row}:any) {
+    // this.userInfo.type = 'modify'
+    // this.userInfo.row = row
+    // console.log(row)
+    let el:any = this.$refs.users
+    el.doModify(row)
+  }
   // 点击编辑
   doMobile ({row}:any) {
     this.userInfo.type = 'modify'
@@ -156,7 +210,33 @@ export default class User extends Vue {
     el.open()
   }
   // 点击删除
-  doDelete ({row}:any) {}
+  doDelete ({row}:any) {
+    this.user_id = []
+    this.user_id.push(row.id)
+    this.doDeleteUser()
+  }
+  // 调用删除接口
+  doDeleteUser () {
+    const req = {
+      user_id: this.user_id
+    }
+    deleteUser(req).then(data => {
+      const res:any = data
+      if (res.code === 0) {
+        this.$message.success('删除成功')
+        this.doGetList()
+      }
+    }).catch(err => {
+      this.$message.error(err)
+    })
+  }
+  // 新增或编辑成功，返回函数
+  personList (msg:number) {
+    this.pageNo = 1
+    this.pageSize = 10
+    this.name = ''
+    this.doGetList()
+  }
 }
 </script>
 <style lang="scss" scoped>

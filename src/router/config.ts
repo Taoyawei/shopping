@@ -1,7 +1,7 @@
 import { RouteConfig } from 'vue-router'
 const routes: Array<RouteConfig> = [
   {
-    path: '/',
+    path: '/login',
     name: 'Login',
     meta: {
       title: '登录'
@@ -27,7 +27,7 @@ const routes: Array<RouteConfig> = [
         children: [
           {
             path: '/home/index',
-            name: 'Home',
+            name: 'Index',
             meta: {
               title: '首页',
               type: 'iconyonghu'

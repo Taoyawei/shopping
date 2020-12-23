@@ -20,12 +20,14 @@
       show-checkbox
       node-key="id"
       :props="defaultProps">
-      <span class="custom-tree-node" slot-scope="{ node, data }">
-        <span>{{ node.label }}</span>
+      <!-- , treeList -->
+      <span class="custom-tree-node" slot-scope="{ data }">
+        <span>{{ data.menu_name }}</span>
         <span style="margin-left: 12px">
           <el-button
             type="text"
             size="mini"
+            @click="() => append(data)"
           >
             <!-- @click="() => append(data)" -->
             新增
@@ -33,6 +35,7 @@
           <el-button
             type="text"
             size="mini"
+            @click="() => doMobile(data)"
           >
             <!-- @click="() => append(data)" -->
             编辑
@@ -40,6 +43,7 @@
           <el-button
             type="text"
             size="mini"
+            @click="() => singDelete(data)"
           >
             <!-- @click="() => remove(node, data)" -->
             删除
@@ -47,56 +51,24 @@
         </span>
       </span>
     </el-tree>
-    <!-- <vxe-table
-      :border="false"
-      resizable
-      show-overflow
-      :height="tableHeight"
-      :data="list"
-      header-row-class-name="table-header"
-      header-cell-class-name="table-header-cell"
-    >
-      <vxe-table-column field="menu_name" title="菜单名称" min-width="100px"></vxe-table-column>
-      <vxe-table-column field="code" title="菜单code" min-width="100px"></vxe-table-column>
-      <vxe-table-column field="menu_icon" title="菜单图标" min-width="100px"></vxe-table-column>
-      <vxe-table-column field="menu_ser" title="排序" min-width="100px"></vxe-table-column>
-      <vxe-table-column field="option" title="操作" min-width="100px">
-        <template v-slot="{row}">
-          <div>
-            <span class="span-btn-active" @click="doMobile({row})">编辑</span>
-            <span class="span-btn-active" @click="doDelete({row})">删除</span>
-          </div>
-        </template>
-      </vxe-table-column>
-    </vxe-table> -->
   </div>
-  <!-- <div class="user-page">
-    <el-pagination
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-      :current-page="pageNo"
-      :page-sizes="[10, 20, 50, 100]"
-      :page-size="pageSize"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="total">
-    </el-pagination>
-  </div> -->
   <!-- 添加juese -->
-  <add-role ref="roles" :info="userInfo"></add-role>
+  <add-menu ref="menus" @success="addSuccess" :info="userInfo"></add-menu>
   <!-- 分配菜单 -->
-  <dis-menu ref="disMenu"></dis-menu>
+  <!-- <dis-menu ref="disMenu"></dis-menu> -->
 </div>
 </template>
 <script lang="ts">
 import {Vue, Component} from 'vue-property-decorator'
 import icon from '@/components/icon/icon.vue'
 import top from '@/components/top/index.vue'
-import { getHeight } from '@/utils/utils'
-import AddRole from './component/role/addRole.vue'
-import DisMenu from './component/role/disMenu.vue'
+import { getHeight, repTree } from '@/utils/utils'
+import AddMenu from './component/menu/addMenu.vue'
+// import DisMenu from './component/role/disMenu.vue'
 import {
-  getList
-} from '@/api/user'
+  getList,
+  deleteMenu
+} from '@/api/menu'
 interface Uinfo {
   type: string,
   [propName:string]: any
@@ -105,8 +77,7 @@ interface Uinfo {
   components: {
     icon,
     top,
-    AddRole,
-    DisMenu
+    AddMenu
   }
 })
 export default class User extends Vue {
@@ -130,60 +101,35 @@ export default class User extends Vue {
     type: 'add',
     row: null
   }
-  private treeList:any = [
-    {
-      id: 1,
-      label: '一级 1',
-      children: [{
-        id: 4,
-        label: '二级 1-1',
-        children: [{
-          id: 9,
-          label: '三级 1-1-1'
-        }, {
-          id: 10,
-          label: '三级 1-1-2'
-        }]
-      }]
-    }, {
-      id: 2,
-      label: '一级 2',
-      children: [{
-        id: 5,
-        label: '二级 2-1'
-      }, {
-        id: 6,
-        label: '二级 2-2'
-      }]
-    }, {
-      id: 3,
-      label: '一级 3',
-      children: [{
-        id: 7,
-        label: '二级 3-1'
-      }, {
-        id: 8,
-        label: '二级 3-2'
-      }]
-    }
-  ]
+  private treeList:any = []
   private defaultProps:any = {
     children: 'children',
     label: 'label'
   }
+  private ids:number[] = [] // 选中菜单id集合
   
   created () {
     this.doGetList()
   }
-  /***********mehods******* */ 
-  // 获取用户列表
+  /***********mehods******* */
+  // 新增菜单
+  append (data:any) {
+    // console.log(data)
+    this.userInfo.type = 'newAdd'
+    this.userInfo.row = data
+    let el:any = this.$refs.menus
+    el.open()
+  }
+  // 获取菜单列表
   doGetList ():void {
     const req = {
-      pageNo: this.pageNo,
-      pageSize: this.pageSize
+      // pageNo: this.pageNo,
+      // pageSize: this.pageSize
     }
     getList(req).then(res => {
-      console.log(res)
+      // console.log(res)
+      this.treeList = repTree(res.data, -1)
+      // console.log(this.treeList)
     }).catch(err => {
       this.$message.error(err)
     })
@@ -198,7 +144,7 @@ export default class User extends Vue {
   public doAdd () {
     this.userInfo.type = 'add'
     this.userInfo.row = null
-    let el:any = this.$refs.roles
+    let el:any = this.$refs.menus
     el.open()
   }
   // 点击分配权限
@@ -209,14 +155,37 @@ export default class User extends Vue {
   //   el.open()
   // }
   // 点击编辑
-  doMobile ({row}:any) {
+  doMobile (row:any) {
     this.userInfo.type = 'modify'
     this.userInfo.row = row
-    let el:any = this.$refs.roles
+    let el:any = this.$refs.menus
     el.open()
   }
-  // 点击删除
-  doDelete ({row}:any) {}
+  // 点击单个删除
+  singDelete (row:any) {
+    this.ids = []
+    this.ids.push(row.id)
+    this.doDelete()
+  }
+  // 新增编辑成功
+  addSuccess () {
+    this.doGetList()
+  }
+  // 调用删除接口
+  doDelete () {
+    const req = {
+      menu_id: this.ids
+    }
+    deleteMenu(req).then(data => {
+      const res:any = data
+      if (res.code === 0) {
+        this.$message.success('删除成功')
+        this.doGetList()
+      }
+    }).catch(err => {
+      this.$message.error(err.message)
+    })
+  }
 }
 </script>
 <style lang="scss" scoped>

@@ -16,7 +16,7 @@ router.beforeEach((to, from, next) => {
     console.log(0)
     next('/login')
   } else if (to.path === '/' && store.getters.userInfo) {
-    console.log(1)
+    // console.log(1)
     next('/home/index')
   }
   next()

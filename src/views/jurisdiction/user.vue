@@ -74,7 +74,7 @@
   <!-- 添加用户 -->
   <add-user ref="users" :info="userInfo" @success="personList"></add-user>
   <!-- 分配角色 -->
-  <dis-role ref="disRole"></dis-role>
+  <dis-role ref="disRole" :info="userInfo"></dis-role>
 </div>
 </template>
 <script lang="ts">
@@ -190,7 +190,7 @@ export default class User extends Vue {
   // 点击分配权限
   doAllocation ({row}:any) {
     // this.userInfo.type = 'modify'
-    // this.userInfo.row = row
+    this.userInfo.row = row
     let el:any = this.$refs.disRole
     el.open()
   }

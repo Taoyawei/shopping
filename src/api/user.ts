@@ -39,3 +39,19 @@ export function deleteUser (params:Data) {
     data: params
   })
 }
+// 获取角色列表
+export function getRole (params:any) {
+  return axios({
+    url: '/role/get/all',
+    method: 'post',
+    data: params
+  })
+}
+// 用户添加角色列表
+export function setRole (params:any) {
+  return axios({
+    url: 'user/add/role',
+    method: 'post',
+    data: params
+  })
+}

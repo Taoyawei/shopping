@@ -12,9 +12,9 @@
     </div>
   </div>
   <div class="user-body">
+    <!-- :multiple-limit="2" -->
     <el-select
       clearable
-      :multiple-limit="2"
       v-model="role_ids"
       multiple
       filterable
@@ -24,33 +24,69 @@
       placeholder="请选择角色">
       <el-option
         v-for="item in roleList"
-        :key="item.value"
-        :label="item.label"
-        :value="item.value">
+        :key="item.id"
+        :label="item.role_name"
+        :value="item.id">
       </el-option>
     </el-select>
   </div>
   <div class="add-suer-footer">
     <el-button class="footer-cancle" @click="doClose">取消</el-button>
-    <el-button class="footer-comfirm">确认</el-button>
+    <el-button class="footer-comfirm" @click="doOk">确认</el-button>
   </div>
   </el-dialog>
 </template>
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator'
+import { Vue, Component, Prop } from 'vue-property-decorator'
 import Icon from '@/components/icon/icon.vue'
+import {
+  getRole,
+  setRole
+} from '@/api/user'
 @Component({
   components: {
     Icon
   }
 })
 export default class DisRole extends Vue {
+  @Prop({type: Object}) readonly info:any
   private visible:boolean = false // 控制显隐
   private role_ids:number[] = [] // 角色id集合
   private roleList:any = [] // 角色列表
   // 打开弹窗
   open () {
-    this.visible = true
+    this.doGetRole()
+  }
+  // 获取角色列表
+  doGetRole () {
+    const req = {
+      user_id: this.info.row.id
+    }
+    getRole(req).then(data => {
+      const res:any = data
+      this.role_ids = []
+      this.roleList = res.data
+      this.roleList.forEach((item:any) => {
+        if (item.default) this.role_ids.push(item.id)
+      })
+      this.visible = true
+    }).catch(err => {
+      this.$message.error(err)
+    })
+  }
+  // 点击确认
+  doOk () {
+    console.log(this.role_ids)
+    const req  ={
+      user_id: this.info.row.id,
+      role_ids: this.role_ids
+    }
+    setRole(req).then(data => {
+      this.$message.success('添加成功')
+      this.doClose()
+    }).catch(err => {
+      this.$message.error(err)
+    })
   }
   // 点击关闭
   doClose () {
@@ -111,7 +147,7 @@ export default class DisRole extends Vue {
     margin-right: 16px;
   }
   .footer-comfirm:hover {
-    background: #409eff;
+    background: #409eff!important;
     color: #FFFFFF;
   }
   .footer-cancle {

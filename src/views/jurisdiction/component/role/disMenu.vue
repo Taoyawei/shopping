@@ -12,26 +12,32 @@
     </div>
   </div>
   <div class="user-body">
-    <!-- :load="loadNode"
-      lazy -->
-    <!-- :default-expanded-keys="[2, 3]"
-    :default-checked-keys="[5]" -->
     <el-tree
+      ref="tree"
       :data="treeList"
       show-checkbox
       node-key="id"
+      :default-checked-keys="defaultCheck"
       :props="defaultProps">
+      <span class="custom-tree-node" slot-scope="{ data }">
+        <span>{{ data.menu_name }}</span>
+      </span>
     </el-tree>
   </div>
   <div class="add-suer-footer">
     <el-button class="footer-cancle" @click="doClose">取消</el-button>
-    <el-button class="footer-comfirm">确认</el-button>
+    <el-button class="footer-comfirm" @click="doOk">确认</el-button>
   </div>
   </el-dialog>
 </template>
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator'
+import { Vue, Component, Prop } from 'vue-property-decorator'
 import Icon from '@/components/icon/icon.vue'
+import { repTree, repArray } from '@/utils/utils'
+import {
+  getMenu,
+  setMenu
+} from "@/api/role"
 interface PropsType {
   label: string,
   children: string,
@@ -43,34 +49,62 @@ interface PropsType {
   }
 })
 export default class DisRole extends Vue {
+  // @Prop({type: Object}) readonly info!:Pinfo!
+  @Prop({type: Object}) readonly info:any
   private visible:boolean = false // 控制显隐
   private treeList:any = []
   private defaultProps:any = {
     children: 'children',
     label: 'label'
   }
+  private defaultCheck: number[] = []
   // 打开弹窗
   open () {
-    this.visible = true
+    this.doGetMenu()
+  }
+  // 获取菜单
+  doGetMenu () {
+    console.log(this.info.row.id)
+    const req = {
+      role_id: this.info.row.id
+    }
+    getMenu(req).then(data => {
+      const res:any = data
+      this.defaultCheck = []
+      res.data.forEach((r:any) => {
+        if (r.isCheck) this.defaultCheck.push(r.id)
+      })
+      this.treeList = repTree(res.data, -1)
+      this.visible = true
+    }).catch(err => {
+      this.$message.error(err)
+    })
+  }
+  // 点击确认
+  doOk () {
+    const el:any = this.$refs.tree
+    const ids = el.getCheckedKeys() // 获取选中的id集合
+    const arr = repArray(this.treeList, []) // 数组扁平化
+    // console.log(arr)
+    arr.forEach((item:any) => {
+      if (ids.indexOf(item.id) !== -1) item.isCheck = true
+      else item.isCheck = false
+    })
+    const req = {
+      role_id: this.info.row.id,
+      list: arr
+    }
+    setMenu(req).then(data => {
+      const res:any = data
+      this.$message.success('配置成功')
+      this.doClose()
+    }).catch(err => {
+      this.$message.error(err)
+    })
   }
   // 点击关闭
   doClose () {
     this.visible = false
-  }
-  loadNode(node:any, resolve:any) {
-    // if (node.level === 0) {
-    //   return resolve([{ name: 'region' }]);
-    // }
-    // if (node.level > 1) return resolve([]);
-    // setTimeout(() => {
-    //   const data = [{
-    //     name: 'leaf',
-    //     leaf: true
-    //   }, {
-    //     name: 'zone'
-    //   }];
-    //   resolve(data);
-    // }, 500);
   }
 }
 </script>
@@ -106,10 +140,7 @@ export default class DisRole extends Vue {
   width: 100%;
   height: 650px;
   display: flex;
-  justify-content: center;
-  align-items: center;
   overflow: auto;
-  // border: 1px solid red;
   .body-input {
     width: 600px;
   }
@@ -128,7 +159,7 @@ export default class DisRole extends Vue {
     margin-right: 16px;
   }
   .footer-comfirm:hover {
-    background: #409eff;
+    background: #409eff!important;
     color: #FFFFFF;
   }
   .footer-cancle {

@@ -35,3 +35,21 @@ export function deleteRole(params:any) {
     data: params
   })
 }
+
+// 获取菜单列表
+export function getMenu (params:any) {
+  return axios({
+    url: '/menu/list',
+    method: 'post',
+    data: params
+  })
+}
+
+// 角色配置菜单
+export function setMenu (params:any) {
+  return axios({
+    url: '/role/to/config',
+    method: 'post',
+    data: params
+  })
+}

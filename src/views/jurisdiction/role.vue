@@ -63,7 +63,7 @@
   <!-- 添加juese -->
   <add-role ref="roles" :info="userInfo" @success="personList"></add-role>
   <!-- 分配菜单 -->
-  <dis-menu ref="disMenu"></dis-menu>
+  <dis-menu ref="disMenu" :info="userInfo"></dis-menu>
 </div>
 </template>
 <script lang="ts">
@@ -183,7 +183,7 @@ export default class User extends Vue {
   // 点击分配权限
   doAllocation ({row}:any) {
     // this.userInfo.type = 'modify'
-    // this.userInfo.row = row
+    this.userInfo.row = row
     let el:any = this.$refs.disMenu
     el.open()
   }

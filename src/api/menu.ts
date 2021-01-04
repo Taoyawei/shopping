@@ -8,7 +8,7 @@ import {axios} from '@/utils/request'
 export function getList (params:any) {
   return axios({
     url: '/menu/list',
-    method: 'get',
+    method: 'post',
     data: params
   })
 }

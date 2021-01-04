@@ -34,3 +34,21 @@ export function repTree (data:any, parentId:number) {
   })
   return tree
 }
+
+/**
+ * 树形数据转换成水平数组
+ */
+export function repArray (data: any, arr:any) {
+  data.forEach((item:any) => {
+    if (item.children) {
+      repArray(item.children, arr)
+      const obj = JSON.parse(JSON.stringify(item))
+      delete obj.children
+      arr.push(obj)
+    } else {
+      arr.push(item)
+    }
+    // arr.push(item)
+  })
+  return arr
+}
